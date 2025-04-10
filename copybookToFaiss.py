@@ -38,22 +38,39 @@ class VectorDatabase:
         """
         chunks = []
         try:
-            for table_name, fields in document.items():
-                if isinstance(fields, dict):
-                    for field_name, attributes in fields.items():
-                        if isinstance(attributes, dict):
-                            description = attributes.get("description", "")
-                            if description:
-                                # 保留原JSON格式
-                                enriched_chunk = {
-                                    "table_name": table_name,
-                                    "field_name": field_name,
-                                    "description": description,
-                                    "original_data": attributes
-                                }
-                                chunks.append(enriched_chunk)
+            for copybook in document.get("copybook", []):  # 遍历 "copybook" 列表
+                table_name = copybook.get("name")  # 获取表名
+                description = copybook.get("description", "")  # 获取表的描述信息
+                fields = copybook.get("fields", [])  # 获取字段列表
+
+                # 如果有字段，则处理每个字段
+                for field in fields:
+                    field_name = field.get("field_name")  # 获取字段名
+                    field_description = field.get("description", "")  # 获取字段的描述
+
+                    # 如果字段描述存在，创建带有描述的块
+                    if field_description:
+                        enriched_chunk = {
+                            "table_name": table_name,
+                            "field_name": field_name,
+                            "description": field_description,
+                            "original_data": field
+                        }
+                        chunks.append(enriched_chunk)
+
+                # 如果没有字段，但是有描述信息，依然将表描述添加到结果中
+                if not fields and description:
+                    enriched_chunk = {
+                        "table_name": table_name,
+                        "field_name": None,
+                        "description": description,
+                        "original_data": copybook
+                    }
+                    chunks.append(enriched_chunk)
+
         except Exception as e:
             logger.error(f"获取文本块时发生错误: {e}")
+
         return chunks
 
     def text_to_embeddings(self, chunks: list) -> np.ndarray:
@@ -134,9 +151,9 @@ class VectorDatabase:
 def main():
     try:
         # 设置JSON文件路径和输出索引文件路径
-        json_file_path = "C:/Users/ADMIN/Desktop/test.json"  # 请替换为实际的文件路径
-        output_index_path = "C:/Users/ADMIN/Desktop/output_faiss_index.index"  # FAISS索引文件的保存路径
-        output_mapping_path = "C:/Users/ADMIN/Desktop/output_text_mapping.json"  # 文本映射文件保存路径
+        json_file_path = "C:/Users/ADMIN/Desktop/copybook.json"  # 请替换为实际的文件路径
+        output_index_path = "C:/Users/ADMIN/Desktop/copybook_faiss_index.index"  # FAISS索引文件的保存路径
+        output_mapping_path = "C:/Users/ADMIN/Desktop/copybook_text_mapping.json"  # 文本映射文件保存路径
 
         # 初始化向量数据库系统并处理文件
         vector_db = VectorDatabase()

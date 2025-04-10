@@ -13,10 +13,10 @@ def recognize_image(image_path):
     with open(image_path, "rb") as img_file:
         image = Image.open(io.BytesIO(img_file.read()))
 
-    response = model.generate_content([image, "这张图片包含什么内容？"])
+    response = model.generate_content([image, "这张图片包含什么内容？识别并打印图片中的完整代码"])
     print(response.text)
 
 
 
 # 调用示例
-recognize_image("C:/Users/ADMIN/Desktop/微信图片_20240501150423.jpg")
+recognize_image("C:/Users/ADMIN/Desktop/3.jpg")
