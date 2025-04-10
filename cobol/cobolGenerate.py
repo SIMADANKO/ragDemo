@@ -107,7 +107,7 @@ def generate_cobol_code(file_path):
     你是一个 COBOL 编程专家。请根据以下信息生成符合规范的 COBOL 代码：
     1. 代码规范要求：
     {standards}
-    2. Copybook 定义：
+    2.数据库接口和模块化设计规范要求：
     {copybook}
     3. 需求描述（从文件识别结果提取）：
     {query}
