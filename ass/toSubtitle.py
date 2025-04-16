@@ -2,6 +2,8 @@ from moviepy.video.io.VideoFileClip import VideoFileClip
 from faster_whisper import WhisperModel
 import os
 import google.generativeai as genai
+import whisper
+
 
 # 配置Gemini API（请替换为您的实际API密钥）
 def configure_gemini_api():
@@ -10,7 +12,10 @@ def configure_gemini_api():
 
 # 使用Gemini 2.0 Pro翻译文本
 def translate_with_gemini(model, text, source_lang="ja", target_lang="zh"):
-    prompt = f"将以下{source_lang}文本翻译为{target_lang}：\n{text} 只需要原句翻译 不要说任何其他的话来分析 仅需要翻译即可"
+    prompt = (
+        f"请将以下{source_lang}文本翻译为{target_lang}，要求表达自然、接地气、口语化，不要太书面语，"
+        f"并且不要输出任何解释、格式说明或其他无关内容，仅输出翻译结果：\n{text}"
+    )
     response = model.generate_content(prompt)
     return response.text.strip()
 
@@ -22,9 +27,9 @@ def extract_audio(video_path, audio_path="temp_audio.wav"):
     video.close()
     audio.close()
 
-# 转录音频：返回句子及对应的起止时间
-def transcribe_with_whisper(audio_path):
-    model = WhisperModel("medium", device="cpu", compute_type="int8")
+# fast_whisper转录音频：返回句子及对应的起止时间
+def transcribe_with_fast_whisper(audio_path):
+    model = WhisperModel("large-v2", device="cuda", compute_type="float32")
     segments, _ = model.transcribe(audio_path, beam_size=5, language="ja")
 
     results = []
@@ -32,6 +37,19 @@ def transcribe_with_whisper(audio_path):
         start = segment.start
         end = segment.end
         text = segment.text.strip()
+        results.append((start, end, text))
+    return results
+
+#whisper转录音频：返回句子及对应的起止时间
+def transcribe_with_whisper(audio_path):
+    model = whisper.load_model("large-v3", device="cuda")
+    result = model.transcribe(audio_path, beam_size=5, language="ja")
+
+    results = []
+    for segment in result["segments"]:
+        start = segment["start"]
+        end = segment["end"]
+        text = segment["text"].strip()
         results.append((start, end, text))
     return results
 
@@ -55,7 +73,7 @@ Timer: 100.0000
 
 [V4+ Styles]
 Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Default,Arial,60,&H00FFFFFF,&H000000FF,&H00000000,&H64000000,-1,0,0,0,100,100,0,0,1,2.0,2.0,2,10,10,10,1
+Style: Default,微软雅黑,60,&H00FFFFFF,&H000000FF,&H00000000,&H64000000,-1,0,0,0,100,100,0,0,1,2.0,2.0,2,10,10,10,1
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
@@ -76,15 +94,19 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 
 # 主流程
 def main():
-    video_path = r"C:\Users\34743\Videos\199-1.mp4"
+    video_path = input("视频文件地址：").strip().strip('"').strip("'")
     audio_path = "temp_audio.wav"
-    output_ass_path = r"C:\Users\34743\Videos\subtitles.ass"
+    output_ass_path = os.path.splitext(video_path)[0] + ".ass"
 
     # 提取音频
     extract_audio(video_path, audio_path)
     print("音频提取完成，开始语音识别...")
 
-    # 转录音频
+    # fast_whisper转录音频
+    #segments = transcribe_with_fast_whisper(audio_path)
+    #print("识别完成，翻译字幕...")
+
+    # whisper转录音频
     segments = transcribe_with_whisper(audio_path)
     print("识别完成，翻译字幕...")
 

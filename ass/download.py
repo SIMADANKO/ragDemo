@@ -1,6 +1,6 @@
 import yt_dlp
 
-def download_bilibili_video(video_url, output_dir='C:/Users/34743/Videos'):
+def download_bilibili_video(video_url, output_dir='F:\Videos'):
     ydl_opts = {
         'outtmpl': f'{output_dir}/%(title)s.%(ext)s',  # 输出目录和文件名
         'format': 'bestvideo+bestaudio/best',  # 下载最佳视频+音频组合，或最佳可用格式
